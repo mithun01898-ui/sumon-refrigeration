@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সুমন রেফ্রিজারেশন - অ্যাডমিন কন্ট্রোল</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-gray-800">
+
+    <header class="bg-slate-900 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-emerald-400"><i class="fa-solid fa-chart-line mr-2"></i>অ্যাডমিন কন্ট্রোল প্যানেল</h1>
+            <span class="text-xs bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-gray-300 font-mono">Status: Active</span>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 space-y-8 max-w-6xl">
+        
+        <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+            <h2 class="text-lg font-bold text-gray-700 mb-3"><i class="fa-solid fa-bullhorn text-amber-500 mr-2"></i>কাস্টমারদের জন্য নোটিশ বোর্ড আপডেট করুন</h2>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <input type="text" id="noticeInput" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="এখানে গুরুত্বপূর্ণ নোটিশটি লিখুন (যেমন: আজ আমাদের দোকান হাফ বেলা খোলা থাকবে)...">
+                <div class="flex gap-2">
+                    <button onclick="saveNotice()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg transition shadow cursor-pointer">নোটিশ দেখান</button>
+                    <button onclick="clearNotice()" class="bg-red-100 hover:bg-red-200 text-red-600 font-bold px-4 py-2.5 rounded-lg transition cursor-pointer">মুছে ফেলুন</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+            <div class="p-5 bg-slate-100 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-list-check text-blue-600 mr-2"></i>কাস্টমার সার্ভিস রিকোয়েস্ট তালিকা</h2>
+                <button onclick="clearAllRequests()" class="text-xs bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1.5 rounded transition cursor-pointer"><i class="fa-solid fa-trash-can mr-1"></i>সব ডিলিট করুন</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-gray-600 uppercase text-xs font-bold border-b border-gray-200">
+                            <th class="p-4">তারিখ</th>
+                            <th class="p-4">কাস্টমার</th>
+                            <th class="p-4">মোবাইল</th>
+                            <th class="p-4">পণ্য</th>
+                            <th class="p-4">নির্দিষ্ট সমস্যা</th>
+                            <th class="p-4">লাইভ লোকেশন</th>
+                            <th class="p-4">অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
+                </table>
+            </div>
+            <div id="noDataMessage" class="p-12 text-center text-gray-400 font-medium hidden">
+                <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i> কোনো নতুন রিকোয়েস্ট নেই।
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Notice Logic
+        document.getElementById('noticeInput').value = localStorage.getItem('shopNotice') || '';
+        function saveNotice() {
+            const txt = document.getElementById('noticeInput').value;
+            localStorage.setItem('shopNotice', txt);
+            alert('নোটিশটি সফলভাবে ওয়েবসাইটে লাইভ করা হয়েছে!');
+        }
+        function clearNotice() {
+            localStorage.removeItem('shopNotice');
+            document.getElementById('noticeInput').value = '';
+            alert('ওয়েবসাইট থেকে নোটিশটি সরিয়ে ফেলা হয়েছে।');
+        }
+
+        // Requests Table Logic
+        function loadRequests() {
+            const tableBody = document.getElementById('adminTableBody');
+            const noData = document.getElementById('noDataMessage');
+            const requests = JSON.parse(localStorage.getItem('shopRequests')) || [];
+
+            if(requests.length === 0) {
+                noData.classList.remove('hidden');
+                tableBody.innerHTML = '';
+                return;
+            }
+            noData.classList.add('hidden');
+
+            tableBody.innerHTML = requests.reverse().map((req, index) => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-4 text-gray-400 font-mono text-xs">${req.date}</td>
+                    <td class="p-4 font-bold text-gray-900">${req.name}</td>
+                    <td class="p-4 text-blue-600 font-mono font-semibold">${req.phone}</td>
+                    <td class="p-4"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md border border-blue-100 text-xs font-semibold">${req.product}</span></td>
+                    <td class="p-4 text-gray-600 max-w-xs truncate" title="${req.problem}">${req.problem}</td>
+                    <td class="p-4">
+                        <a href="https://www.google.com/maps/search/?api=1&query=${req.lat},${req.lng}" target="_blank" 
+                           class="inline-flex items-center px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-md border border-red-200 transition">
+                            <i class="fa-solid fa-map-location-dot mr-1 text-sm"></i> গুগল ম্যাপস
+                        </a>
+                    </td>
+                    <td class="p-4 flex gap-2">
+                        <a href="https://wa.me/88${req.phone}?text=আসসালামু আলাইকুম ${req.name} সাহেব, সুমন রেফ্রিজারেশন থেকে যোগাযোগ করছি। আপনার ${req.product} এর সমস্যাটির ব্যাপারে..." target="_blank" class="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg border border-emerald-200 transition" title="WhatsApp চ্যাট">
+                            <i class="fa-brands fa-whatsapp text-base"></i>
+                        </a>
+                        <button onclick="deleteRequest(${req.id})" class="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg border border-red-200 transition cursor-pointer" title="ডিলিট">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteRequest(id) {
+            if(confirm('আপনি কি এই কাস্টমারের রিকোয়েস্টটি ডিলিট করতে চান?')) {
+                let requests = JSON.parse(localStorage.getItem('shopRequests')) || [];
+                requests = requests.filter(req => req.id !== id);
+                localStorage.setItem('shopRequests', JSON.stringify(requests));
+                loadRequests();
+            }
+        }
+
+        function clearAllRequests() {
+            if(confirm('সাবধান! আপনি কি তালিকার সব কাস্টমার ডাটা একসাথে ডিলিট করতে চান?')) {
+                localStorage.removeItem('shopRequests');
+                loadRequests();
+            }
+        }
+
+        window.onload = loadRequests;
+    </script>
+</body>
+</html>

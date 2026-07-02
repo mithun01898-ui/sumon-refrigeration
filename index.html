@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সুمن রেফ্রিজারেশন - বদরগঞ্জ, রংপুর</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 320px; border-radius: 12px; z-index: 1; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <div id="liveNoticeBar" class="bg-amber-500 text-slate-950 text-center font-bold py-2.5 px-4 text-sm shadow-md hidden flex items-center justify-center gap-2">
+        <i class="fa-solid fa-bullhorn text-lg animate-bounce"></i>
+        <span id="noticeText"></span>
+    </div>
+
+    <header class="bg-blue-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-wide"><i class="fa-solid fa-screwdriver-wrench mr-2"></i>সুমন রেফ্রিজারেশন</h1>
+            <p class="text-sm bg-blue-700 px-3 py-1 rounded mt-2 sm:mt-0"><i class="fa-solid fa-location-dot mr-1"></i> বদরগঞ্জ, রংপুর</p>
+        </div>
+    </header>
+
+    <section class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-12 px-4 text-center">
+        <h2 class="text-3xl sm:text-4xl font-extrabold mb-3">আপনার ঘরের ইলেকট্রনিক্স পণ্য নষ্ট?</h2>
+        <p class="text-lg max-w-xl mx-auto opacity-90">চিন্তার কিছু নেই! আমাদের দক্ষ টেকনিশিয়ান আছে আপনার সেবায়। নিচে আপনার সমস্যা এবং লোকেশন সাবমিট করুন, আমরা দ্রুত যোগাযোগ করব।</p>
+    </section>
+
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-10 border border-gray-100">
+            <h3 class="text-xl font-bold text-gray-700 mb-6 border-b pb-2 text-center sm:text-left">
+                <i class="fa-solid fa-file-invoice-dollar mr-2 text-blue-600"></i>অনলাইন সার্ভিস রিকোয়েস্ট
+            </h3>
+
+            <form id="serviceForm" class="space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1">আপনার নাম *</label>
+                        <input type="text" id="custName" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600 mb-1">মোবাইল নাম্বার *</label>
+                        <input type="tel" id="custPhone" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">কোন জিনিসে সমস্যা? (সিলেক্ট করুন) *</label>
+                    <select id="custProduct" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium">
+                        <option value="" disabled selected>-- একটি জিনিস বেছে নিন --</option>
+                        <option value="ফ্রিজ (Refrigerator)">ফ্রিজ (Refrigerator)</option>
+                        <option value="এসি (Air Conditioner)">এসি (Air Conditioner)</option>
+                        <option value="ওভেন (Oven)">ওভেন (Oven)</option>
+                        <option value="রাইস কুকার (Rice Cooker)">রাইস কুকার (Rice Cooker)</option>
+                        <option value="ওয়াশিং মেশিন (Washing Machine)">ওয়াশিং মেশিন (Washing Machine)</option>
+                        <option value="মোটর পাম্প (Motor Pump)">মোটর পাম্প (Motor Pump)</option>
+                        <option value="ওয়াটার সাবমার্সিবল মোটর (Submersible Motor)">ওয়াটার সাবমার্সিবল মোটর (Submersible Motor)</option>
+                        <option value="অন্যান্য সমস্যা">অন্যান্য জিনিস / আলাদা সমস্যা</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">সমস্যার বিবরণ (বিস্তারিত লিখুন) *</label>
+                    <textarea id="custProblem" rows="3" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="মেশিনে কী সমস্যা হচ্ছে তা এখানে লিখুন..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">
+                        <i class="fa-solid fa-map-marker-alt text-red-500 mr-1"></i> ম্যাপে আপনার বাড়ির লোকেশন সিলেক্ট করুন *
+                    </label>
+                    <p class="text-xs text-gray-400 mb-3">নিচের ম্যাপে আপনার বাড়ির ওপর ক্লিক করুন অথবা লাল মার্কারটি টেনে বসান।</p>
+                    <div id="map"></div>
+                    <input type="hidden" id="latitude">
+                    <input type="hidden" id="longitude">
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md cursor-pointer">
+                    <i class="fa-solid fa-paper-plane mr-2"></i>অনলাইন রিকোয়েস্ট পাঠান
+                </button>
+            </form>
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+            <a href="tel:01898604442" class="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-xl shadow transition">
+                <i class="fa-solid fa-phone-volume text-xl mr-2"></i> সরাসরি কল করুন
+            </a>
+            <a href="https://wa.me/8801898604442" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-4 rounded-xl shadow transition">
+                <i class="fa-brands fa-whatsapp text-xl mr-2"></i> হোয়াটসঅ্যাপ চ্যাট
+            </a>
+            <a href="mailto:mithun01898@gmail.com" class="flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-xl shadow transition">
+                <i class="fa-solid fa-envelope text-xl mr-2"></i> ইমেইল পাঠান
+            </a>
+        </div>
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 py-6 text-center mt-12 text-sm">
+        <p>© 2026 সুমন রেফ্রিজারেশন। অল রাইটস রিজার্ভড।</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Load Notice
+        function checkNotice() {
+            const notice = localStorage.getItem('shopNotice');
+            const bar = document.getElementById('liveNoticeBar');
+            const txt = document.getElementById('noticeText');
+            if(notice && notice.trim() !== "") {
+                txt.innerText = notice;
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+        }
+        setInterval(checkNotice, 2000);
+        checkNotice();
+
+        // Map Setup
+        const defaultLat = 25.7032, defaultLng = 89.0526;
+        const map = L.map('map').setView([defaultLat, defaultLng], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        let marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+        document.getElementById('latitude').value = defaultLat;
+        document.getElementById('longitude').value = defaultLng;
+
+        function updateCoords(lat, lng) {
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+        }
+        marker.on('dragend', function (e) { updateCoords(marker.getLatLng().lat, marker.getLatLng().lng); });
+        map.on('click', function (e) { marker.setLatLng(e.latlng); updateCoords(e.latlng.lat, e.latlng.lng); });
+
+        // Submit Form
+        document.getElementById('serviceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const requestData = {
+                id: Date.now(),
+                name: document.getElementById('custName').value,
+                phone: document.getElementById('custPhone').value,
+                product: document.getElementById('custProduct').value,
+                problem: document.getElementById('custProblem').value,
+                lat: document.getElementById('latitude').value,
+                lng: document.getElementById('longitude').value,
+                date: new Date().toLocaleString('bn-BD')
+            };
+            let currentRequests = JSON.parse(localStorage.getItem('shopRequests')) || [];
+            currentRequests.push(requestData);
+            localStorage.setItem('shopRequests', JSON.stringify(currentRequests));
+            alert('আপনার সার্ভিস রিকোয়েস্টটি সফলভাবে পাঠানো হয়েছে! আমরা দ্রুত যোগাযোগ করব।');
+            this.reset();
+        });
+    </script>
+</body>
+</html>
