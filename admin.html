@@ -1,0 +1,75 @@
+i<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সুমন রেফ্রিজারেশন - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding: 20px 10px; }
+        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid #0052d4; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
+        .customer-name { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        .date-badge { background: #e1f5fe; color: #0288d1; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .info-item { margin-bottom: 8px; font-size: 14px; }
+        .info-item strong { color: #555; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; text-decoration: none; }
+        .btn-map { background: #e74c3c; color: white; }
+        .btn-call { background: #2ecc71; color: white; }
+        .btn-delete { background: #95a5a6; color: white; margin-left: auto; }
+        .no-data { text-align: center; padding: 40px; color: #7f8c8d; font-size: 16px; background: white; border-radius: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fa-solid fa-user-shield"></i> সুমন রেফ্রিজারেশন - এডমিন ড্যাশবোর্ড</h2>
+            <p style="font-size: 13px; margin-top: 5px;">গ্রাহকদের অনলাইন সার্ভিস রিকোয়েস্ট তালিকা</p>
+        </div>
+        <div id="requestList"></div>
+    </div>
+    <script>
+        function loadRequests() {
+            const requestList = document.getElementById('requestList');
+            let reqList = JSON.parse(localStorage.getItem('serviceRequests')) || [];
+            if (reqList.length === 0) {
+                requestList.innerHTML = `<div class="no-data"><i class="fa-solid fa-folder-open fa-2x"></i><br><br>বর্তমানে কোনো সার্ভিস রিকোয়েস্ট নেই।</div>`;
+                return;
+            }
+            requestList.innerHTML = '';
+            reqList.reverse().forEach((req) => {
+                const mapUrl = `https://www.google.com/maps?q=${req.lat},${req.lng}`;
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="customer-name"><i class="fa-solid fa-user"></i> ${req.name}</div>
+                        <div class="date-badge">${req.date}</div>
+                    </div>
+                    <div class="info-item"><strong><i class="fa-solid fa-phone"></i> মোবাইল নম্বর:</strong> ${req.phone}</div>
+                    <div class="info-item"><strong><i class="fa-solid fa-location-dot"></i> ঠিকানা:</strong> ${req.fullAddress}</div>
+                    <div class="info-item"><strong><i class="fa-solid fa-tv"></i> পণ্যের ধরন:</strong> ${req.prod}</div>
+                    <div class="info-item"><strong><i class="fa-solid fa-triangle-exclamation"></i> সমস্যার বিবরণ:</strong> ${req.issue}</div>
+                    <div class="btn-group">
+                        <a href="${mapUrl}" target="_blank" class="btn btn-map"><i class="fa-solid fa-map-marked-alt"></i> ম্যাপে বাড়ি দেখুন</a>
+                        <a href="tel:${req.phone}" class="btn btn-call"><i class="fa-solid fa-phone-flip"></i> কল করুন</a>
+                    </div>
+                `;
+                requestList.appendChild(card);
+            });
+        }
+        window.onload = loadRequests;
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
