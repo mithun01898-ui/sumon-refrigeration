@@ -1,0 +1,115 @@
+cat > index.html
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সুমন রেফ্রিজারেশন - কাস্টমার প্যানেল</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; color: #333; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 24px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        textarea { resize: vertical; height: 100px; }
+        button { width: 100%; padding: 12px; background-color: #27ae60; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #219653; }
+        .status-msg { text-align: center; margin-top: 15px; font-weight: bold; padding: 10px; border-radius: 6px; display: none; }
+        .success { background-color: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2><i class="fa-solid fa-screwdriver-wrench"></i> সুমন রেফ্রিজারেশন</h2>
+    <form id="serviceForm">
+        <div class="form-group">
+            <label for="name">আপনার নাম:</label>
+            <input type="text" id="name" required placeholder="নাম লিখুন">
+        </div>
+        <div class="form-group">
+            <label for="phone">মোবাইল নম্বর:</label>
+            <input type="tel" id="phone" required placeholder="01XXXXXXXXX">
+        </div>
+        <div class="form-group">
+            <label for="product">পণ্যের ধরন:</label>
+            <select id="product" required>
+                <option value="">নির্বাচন করুন</option>
+                <option value="Refrigerator">রেফ্রিজারেটর / ফ্রিজ</option>
+                <option value="Air Conditioner">এয়ার কন্ডিশনার (AC)</option>
+                <option value="Washing Machine">ওয়াশিং মেশিন</option>
+                <option value="Others">অন্যান্য</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="issue">সমস্যার বিবরণ:</label>
+            <textarea id="issue" required placeholder="ফ্রিজে কী সমস্যা হচ্ছে বিস্তারিত লিখুন..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="address">পূর্ণাঙ্গ ঠিকানা:</label>
+            <textarea id="address" required placeholder="গ্রাম/রোড, থানা, জেলা লিখুন..."></textarea>
+        </div>
+        <input type="hidden" id="latitude">
+        <input type="hidden" id="longitude">
+        <button type="submit" id="submitBtn"><i class="fa-solid fa-paper-plane"></i> রিকোয়েস্ট পাঠান</button>
+    </form>
+    <div id="status" class="status-msg"></div>
+</div>
+
+<script>
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbzV-Xg9zK492D_uB961N8q17Yc3M6lscv9F571O6-V_vJshz93I9kGvY0K4nUqZ6QWv/exec';
+
+    window.onload = function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                },
+                (error) => { console.log("Location access denied."); },
+                { enableHighAccuracy: true }
+            );
+        }
+    };
+
+    document.getElementById('serviceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> প্রসেস হচ্ছে...';
+
+        const formData = new FormData();
+        formData.append('name', document.getElementById('name').value);
+        formData.append('phone', document.getElementById('phone').value);
+        formData.append('product', document.getElementById('product').value);
+        formData.append('issue', document.getElementById('issue').value);
+        formData.append('address', document.getElementById('address').value);
+        formData.append('lat', document.getElementById('latitude').value || '0');
+        formData.append('lng', document.getElementById('longitude').value || '0');
+
+        fetch(scriptUrl, { method: 'POST', body: formData })
+        .then(res => {
+            status.style.display = 'block';
+            status.className = 'status-msg success';
+            status.innerHTML = '<i class="fa-solid fa-circle-check"></i> রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!';
+            document.getElementById('serviceForm').reset();
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> রিকোয়েস্ট পাঠান';
+            
+            // WhatsApp Notification Alert Dynamic Status
+            setTimeout(() => { status.style.display = 'none'; }, 5000);
+        })
+        .catch(err => {
+            console.error(err);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> রিকোয়েস্ট পাঠান';
+        });
+    });
+</script>
+</body>
+</html>
