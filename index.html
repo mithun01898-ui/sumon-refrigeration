@@ -1,4 +1,3 @@
-cat > index.html
 <!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -6,110 +5,155 @@ cat > index.html
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>সুমন রেফ্রিজারেশন - কাস্টমার প্যানেল</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f7f6; color: #333; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 24px; }
-        .form-group { margin-bottom: 15px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f4f7f6; padding: 15px; }
+        .container { max-width: 650px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .form-group { margin-bottom: 12px; }
         label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
-        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
-        textarea { resize: vertical; height: 100px; }
-        button { width: 100%; padding: 12px; background-color: #27ae60; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
-        button:hover { background-color: #219653; }
-        .status-msg { text-align: center; margin-top: 15px; font-weight: bold; padding: 10px; border-radius: 6px; display: none; }
-        .success { background-color: #d4edda; color: #155724; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
+        .address-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        #map-container { position: relative; margin-bottom: 15px; }
+        #search-box { position: absolute; top: 10px; left: 50px; z-index: 1000; width: calc(100% - 70px); max-width: 300px; display: flex; gap: 5px; }
+        #search-input { background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #search-btn { background: #3498db; color: white; border: none; padding: 0 10px; border-radius: 8px; cursor: pointer; }
+        #map { height: 250px; border-radius: 8px; border: 1px solid #ccc; z-index: 1; }
+        button.submit-btn { width: 100%; padding: 12px; background-color: #27ae60; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h2><i class="fa-solid fa-screwdriver-wrench"></i> সুমন রেফ্রিজারেশন</h2>
+    
+    <!-- নোটিশ বোর্ড এলাকা -->
+    <div id="customer-notice" style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: none; border-left: 5px solid #ffc107;">
+        <i class="fa-solid fa-bell"></i> <span id="notice-text"></span>
+    </div>
+
     <form id="serviceForm">
+        <div class="form-group"><label>আপনার নাম:</label><input type="text" id="name" required placeholder="নাম লিখুন"></div>
+        <div class="form-group"><label>মোবাইল নম্বর:</label><input type="tel" id="phone" required placeholder="01XXXXXXXXX"></div>
         <div class="form-group">
-            <label for="name">আপনার নাম:</label>
-            <input type="text" id="name" required placeholder="নাম লিখুন">
-        </div>
-        <div class="form-group">
-            <label for="phone">মোবাইল নম্বর:</label>
-            <input type="tel" id="phone" required placeholder="01XXXXXXXXX">
-        </div>
-        <div class="form-group">
-            <label for="product">পণ্যের ধরন:</label>
+            <label>পণ্যের ধরন:</label>
             <select id="product" required>
                 <option value="">নির্বাচন করুন</option>
-                <option value="Refrigerator">রেফ্রিজারেটর / ফ্রিজ</option>
-                <option value="Air Conditioner">এয়ার কন্ডিশনার (AC)</option>
+                <option value="Refrigerator">ফ্রিজ</option>
+                <option value="Air Conditioner">AC</option>
                 <option value="Washing Machine">ওয়াশিং মেশিন</option>
-                <option value="Others">অন্যান্য</option>
             </select>
         </div>
-        <div class="form-group">
-            <label for="issue">সমস্যার বিবরণ:</label>
-            <textarea id="issue" required placeholder="ফ্রিজে কী সমস্যা হচ্ছে বিস্তারিত লিখুন..."></textarea>
+        <div class="form-group"><label>সমস্যার বিবরণ:</label><textarea id="issue" required placeholder="সমস্যা বিস্তারিত লিখুন..."></textarea></div>
+        
+        <!-- ব্রেকডাউন অ্যাড্রেস -->
+        <label>ঠিকানা (বিস্তারিত):</label>
+        <div class="address-grid">
+            <input type="text" id="district" placeholder="জেলা" required>
+            <input type="text" id="thana" placeholder="থানা" required>
         </div>
-        <div class="form-group">
-            <label for="address">পূর্ণাঙ্গ ঠিকানা:</label>
-            <textarea id="address" required placeholder="গ্রাম/রোড, থানা, জেলা লিখুন..."></textarea>
+        <div class="address-grid">
+            <input type="text" id="union" placeholder="ইউনিয়ন/ওয়ার্ড" required>
+            <input type="text" id="village" placeholder="গ্রাম/রোড/বাসা" required>
         </div>
-        <input type="hidden" id="latitude">
-        <input type="hidden" id="longitude">
-        <button type="submit" id="submitBtn"><i class="fa-solid fa-paper-plane"></i> রিকোয়েস্ট পাঠান</button>
+
+        <!-- ম্যাপ এবং সার্চ বার -->
+        <div class="form-group">
+            <label>ম্যাপে আপনার বাড়ি সিলেক্ট করুন:</label>
+            <div id="map-container">
+                <div id="search-box">
+                    <input type="text" id="search-input" placeholder="এলাকা সার্চ করুন...">
+                    <button type="button" id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <input type="hidden" id="latitude" value="23.8103">
+        <input type="hidden" id="longitude" value="90.4125">
+        <button type="submit" class="submit-btn" id="submitBtn"><i class="fa-solid fa-paper-plane"></i> রিকোয়েस्ट পাঠান</button>
     </form>
-    <div id="status" class="status-msg"></div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbzV-Xg9zK492D_uB961N8q17Yc3M6lscv9F571O6-V_vJshz93I9kGvY0K4nUqZ6QWv/exec';
+    // ম্যাপ এবং মার্কার ইনিশিয়ালাইজেশন
+    const map = L.map('map').setView([23.8103, 90.4125], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    let marker = L.marker([23.8103, 90.4125], {draggable: true}).addTo(map);
 
-    window.onload = function() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    document.getElementById('latitude').value = position.coords.latitude;
-                    document.getElementById('longitude').value = position.coords.longitude;
-                },
-                (error) => { console.log("Location access denied."); },
-                { enableHighAccuracy: true }
-            );
-        }
-    };
+    function updateLatLng(lat, lng) {
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+    }
 
+    marker.on('dragend', function (e) {
+        const pos = marker.getLatLng();
+        updateLatLng(pos.lat, pos.lng);
+    });
+
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        updateLatLng(e.latlng.lat, e.latlng.lng);
+    });
+
+    // লোকেশন সার্চ ফাংশন
+    document.getElementById('search-btn').addEventListener('click', function() {
+        const query = document.getElementById('search-input').value;
+        if(!query) return;
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lon = parseFloat(data[0].lon);
+                map.setView([lat, lon], 15);
+                marker.setLatLng([lat, lon]);
+                updateLatLng(lat, lon);
+            }
+        });
+    });
+
+    // নোটিশ লোড করা
+    const savedNotice = localStorage.getItem('adminNotice');
+    if(savedNotice) {
+        document.getElementById('customer-notice').style.display = 'block';
+        document.getElementById('notice-text').innerText = savedNotice;
+    }
+
+    // ফর্ম সাবমিশন এবং সাউন্ড অ্যালার্ট
     document.getElementById('serviceForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        const status = document.getElementById('status');
         
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> প্রসেস হচ্ছে...';
+        // সাউন্ড অ্যালার্ট বাজানো (Beep Sound)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz টোন
+        osc.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3); // ০.৩ সেকেন্ড বাজবে
 
-        const formData = new FormData();
-        formData.append('name', document.getElementById('name').value);
-        formData.append('phone', document.getElementById('phone').value);
-        formData.append('product', document.getElementById('product').value);
-        formData.append('issue', document.getElementById('issue').value);
-        formData.append('address', document.getElementById('address').value);
-        formData.append('lat', document.getElementById('latitude').value || '0');
-        formData.append('lng', document.getElementById('longitude').value || '0');
-
-        fetch(scriptUrl, { method: 'POST', body: formData })
-        .then(res => {
-            status.style.display = 'block';
-            status.className = 'status-msg success';
-            status.innerHTML = '<i class="fa-solid fa-circle-check"></i> রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!';
-            document.getElementById('serviceForm').reset();
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> রিকোয়েস্ট পাঠান';
-            
-            // WhatsApp Notification Alert Dynamic Status
-            setTimeout(() => { status.style.display = 'none'; }, 5000);
-        })
-        .catch(err => {
-            console.error(err);
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> রিকোয়েস্ট পাঠান';
+        // ডেটা কালেকশন
+        const fullAddress = `${document.getElementById('village').value}, ${document.getElementById('union').value}, ${document.getElementById('thana').value}, ${document.getElementById('district').value}`;
+        let reqList = JSON.parse(localStorage.getItem('serviceRequests')) || [];
+        reqList.push({
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value,
+            prod: document.getElementById('product').value,
+            issue: document.getElementById('issue').value,
+            fullAddress: fullAddress,
+            lat: document.getElementById('latitude').value,
+            lng: document.getElementById('longitude').value,
+            date: new Date().toLocaleDateString('bn-BD'),
+            status: 'পেন্ডিং'
         });
+        localStorage.setItem('serviceRequests', JSON.stringify(reqList));
+        alert('রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!');
+        document.getElementById('serviceForm').reset();
     });
 </script>
 </body>
 </html>
+
+
